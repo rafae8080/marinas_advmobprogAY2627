@@ -54,14 +54,11 @@ class SettingsScreen extends StatelessWidget {
                   size: 24.sp,
                 ),
                 title: CustomText(
-                  text: 'Dark Mode',
+                  text: themeModel.isDark ? 'Dark Mode' : 'Light Mode',
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                 ),
-                subtitle: CustomText(
-                  text: themeModel.isDark ? 'On' : 'Off',
-                  fontSize: 12.sp,
-                ),
+                subtitle: CustomText(text: 'On', fontSize: 12.sp),
               ),
             ),
           ],

@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // models
-import '../models/product.dart';
+// Enhancement 5: the grid is stocked from the carts endpoint now, so its items
+// are CartProducts rather than catalog Products.
+import '../models/cart.dart';
 
 // services
-import '../services/product_service.dart';
+import '../services/cart_service.dart';
 
 // widgets
 import '../widgets/custom_text.dart';
 
 // Enhancement 2: details page opened when a product card is tapped.
-import 'product_details_screen.dart';
+// Enhancement 5: opened through the loader, which fetches the full product.
+import 'product_details_loader.dart';
 
 class ProductScreen extends StatefulWidget {
   const ProductScreen({super.key});
@@ -21,7 +24,7 @@ class ProductScreen extends StatefulWidget {
 }
 
 class _ProductScreenState extends State<ProductScreen> {
-  late final Future<List<Product>> _productsFuture;
+  late final Future<List<CartProduct>> _productsFuture;
 
   // Enhancement 1: state backing the search bar. _searchController drives the
   // TextField, _query holds the current search text used to filter the list.
@@ -31,7 +34,9 @@ class _ProductScreenState extends State<ProductScreen> {
   @override
   void initState() {
     super.initState();
-    _productsFuture = ProductService().getAllProducts();
+    // Enhancement 5: was ProductService().getAllProducts(). The grid now shows
+    // the items that appear in the carts endpoint.
+    _productsFuture = CartService().getCartProducts();
   }
 
   // Enhancement 1: dispose the search controller so it does not leak.
@@ -42,15 +47,15 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   // Enhancement 1: filters the fetched products against the search text.
-  // Matches on title, brand or category, case-insensitively. Filtering is done
-  // locally on the already-fetched list, so typing does not re-hit the API.
-  List<Product> _filterProducts(List<Product> products) {
+  // Filtering is done locally on the already-fetched list, so typing does not
+  // re-hit the API.
+  // Enhancement 5: cart line items carry no brand or category, so the match is
+  // on title alone.
+  List<CartProduct> _filterProducts(List<CartProduct> products) {
     if (_query.isEmpty) return products;
     final query = _query.toLowerCase();
     return products.where((product) {
-      return product.title.toLowerCase().contains(query) ||
-          product.brand.toLowerCase().contains(query) ||
-          product.category.toLowerCase().contains(query);
+      return product.title.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -78,10 +83,7 @@ class _ProductScreenState extends State<ProductScreen> {
                 },
                 decoration: InputDecoration(
                   hintText: 'Search',
-                  hintStyle: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 16.sp,
-                  ),
+                  hintStyle: TextStyle(fontFamily: 'Poppins', fontSize: 16.sp),
                   prefixIcon: Icon(Icons.search, size: 22.sp),
                   // Enhancement 1: clear button, only shown while there is text.
                   suffixIcon: _query.isEmpty
@@ -106,7 +108,7 @@ class _ProductScreenState extends State<ProductScreen> {
               ),
             ),
             SizedBox(height: 16.h),
-            FutureBuilder<List<Product>>(
+            FutureBuilder<List<CartProduct>>(
               future: _productsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -184,7 +186,7 @@ class _ProductScreenState extends State<ProductScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  ProductDetailsScreen(product: product),
+                                  ProductDetailsLoader(productId: product.id),
                             ),
                           );
                         },

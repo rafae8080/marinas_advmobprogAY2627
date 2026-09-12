@@ -44,3 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 marinas_advmobprog\assets\.env
+marinas_advmobprog\CHANGES.md
+marinas_advmobprog\DISCUSSION.md
+CHANGES.md
+DISCUSSION.md

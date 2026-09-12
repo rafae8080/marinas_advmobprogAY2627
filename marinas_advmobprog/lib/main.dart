@@ -12,15 +12,17 @@ import 'screens/settings_screen.dart';
 
 // providers
 import 'providers/theme_provider.dart';
+// Enhancement 4: shared cart state, so the cart tab shows the products added
+// from the shop.
+import 'providers/cart_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((
-    _,
-  ) async {
-    await dotenv.load(fileName: 'assets/.env');
-    runApp(const MarinasAdvMobProg());
-  });
+  await dotenv.load(fileName: 'assets/.env');
+  runApp(const MarinasAdvMobProg());
+  // Locking the orientation is not supported on every platform, so it runs
+  // after runApp — a failure here must not stop the app from rendering.
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 }
 
 class MarinasAdvMobProg extends StatelessWidget {
@@ -28,8 +30,13 @@ class MarinasAdvMobProg extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    // Enhancement 4: two providers now sit above MaterialApp, so both the shop
+    // and the cart tab share one CartProvider instance.
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+      ],
       child: ScreenUtilInit(
         designSize: const Size(412, 715),
         minTextAdapt: true,

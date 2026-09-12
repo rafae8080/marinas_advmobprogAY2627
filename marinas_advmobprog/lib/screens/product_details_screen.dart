@@ -4,12 +4,18 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 // models
 import '../models/product.dart';
 
+// providers
+import '../providers/cart_provider.dart';
+
 // widgets
 import '../widgets/custom_text.dart';
+
+import '../constants.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
   // Enhancement 2: the tapped product is handed straight to this page, so no
@@ -86,6 +92,38 @@ class ProductDetailsScreen extends StatelessWidget {
             ),
             SizedBox(height: 16.h),
             CustomText(text: product.description, fontSize: 14.sp),
+            SizedBox(height: 24.h),
+            // Enhancement 4: adding used to POST straight to /carts/add, which
+            // DummyJSON never persists, so the cart tab never changed. The
+            // product now goes into the shared CartProvider, and the POST
+            // happens once, on "Confirm Order".
+            SizedBox(
+              width: double.infinity,
+              height: 48.h,
+              child: ElevatedButton(
+                onPressed: () {
+                  // read, not watch: this is an event handler, so it must not
+                  // subscribe to the provider.
+                  context.read<CartProvider>().add(product);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Added ${product.title} to cart')),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kAccentAmber,
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
+                child: CustomText(
+                  text: 'Add to Cart',
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
       ),
