@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'product_screen.dart';
 // Enhancement 1: cart screen rendering the /carts endpoint.
 import 'cart_screen.dart';
+// Enhancement 6: the Profile tab now renders the signed-in user.
+import 'profile_screen.dart';
 import '../widgets/custom_text.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -50,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: pageController,
           // Enhancement 2: the bar had three tabs but only one page, so tapping
           // anything other than Shop rendered a blank screen.
-          children: const [ProductScreen(), CartScreen(), _ProfilePage()],
+          children: const [ProductScreen(), CartScreen(), ProfileScreen()],
           onPageChanged: (page) {
             setState(() {
               selectedIndex = page;
@@ -114,15 +116,5 @@ class _ChatPage extends StatelessWidget {
         child: CustomText(text: 'No messages yet.', fontSize: 14.sp),
       ),
     );
-  }
-}
-
-// Enhancement 2: the Profile tab had no page behind it.
-class _ProfilePage extends StatelessWidget {
-  const _ProfilePage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: CustomText(text: 'Profile', fontSize: 14.sp));
   }
 }

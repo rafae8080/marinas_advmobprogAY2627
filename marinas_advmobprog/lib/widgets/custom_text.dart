@@ -12,6 +12,7 @@ class CustomText extends StatelessWidget {
     this.fontStyle = FontStyle.normal,
     this.maxLines,
     this.overflow,
+    this.color,
   });
 
   final String text;
@@ -22,6 +23,9 @@ class CustomText extends StatelessWidget {
   final TextAlign textAlign;
   final String fontFamily;
   final FontStyle fontStyle;
+  // Act4 Enhancement 1: the splash and sign-in screens draw on a navy
+  // background, so the default near-black body colour is not readable there.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +40,7 @@ class CustomText extends StatelessWidget {
         fontWeight: fontWeight,
         fontStyle: fontStyle,
         letterSpacing: letterSpacing,
+        color: color,
       ),
     );
   }

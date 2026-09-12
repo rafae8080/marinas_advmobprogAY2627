@@ -9,6 +9,10 @@ import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
 // Enhancement 3: import the new settings screen that now holds the theme switch.
 import 'screens/settings_screen.dart';
+// Enhancement 6: splash decides where the app starts; signin is where it
+// sends you when no token is stored.
+import 'screens/splash_screen.dart';
+import 'screens/signin_screen.dart';
 
 // providers
 import 'providers/theme_provider.dart';
@@ -49,8 +53,10 @@ class MarinasAdvMobProg extends StatelessWidget {
             darkTheme: themeModel.darkTheme,
             themeMode: themeModel.isDark ? ThemeMode.dark : ThemeMode.light,
             title: 'E-Commerce App',
-            initialRoute: '/home',
+            initialRoute: '/signin',
             routes: {
+              '/splash': (context) => const SplashScreen(),
+              '/signin': (context) => const SigninScreen(),
               '/home': (context) => const HomeScreen(),
               // Enhancement 3: named route for the settings page so the home
               // screen's settings button can navigate to it.

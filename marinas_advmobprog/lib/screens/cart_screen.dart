@@ -2,6 +2,8 @@
 // tappable and opens the existing details screen.
 // Enhancement 3: renders one user's cart via /carts/user/{id}, and confirming
 // the order posts the current items to /carts/add.
+// Act4 Enhancement 3: the cart is now seeded from /carts/user/{id} for the
+// signed-in user, and the order is posted back under that same id.
 // Enhancement 4: the cart no longer downloads a fixed server-side cart, which
 // showed products unrelated to the shop grid. It now reads CartProvider, so it
 // lists exactly the products added from the shop. /carts/add is still used, but
@@ -25,6 +27,7 @@ import '../widgets/custom_text.dart';
 
 import '../constants.dart';
 import 'product_details_screen.dart';
+import 'product_details_loader.dart';
 
 const double _deliveryFee = 8.00;
 
@@ -45,7 +48,9 @@ class _CartScreenState extends State<CartScreen> {
     setState(() => _isSubmitting = true);
     try {
       final created = await CartService().addToCart(
-        userId: kCartUserId,
+        // Act4 Enhancement 3: the order belongs to whoever is signed in.
+        // kCartUserId stays as the fallback for a cart built before login.
+        userId: cart.userId ?? kCartUserId,
         products: cart.toOrderPayload(),
       );
       if (!mounted) return;
@@ -81,9 +86,7 @@ class _CartScreenState extends State<CartScreen> {
       child: SafeArea(
         top: false,
         child: items.isEmpty
-            ? Center(
-                child: CustomText(text: 'Your cart is empty.', fontSize: 14.sp),
-              )
+            ? _EmptyCart(cart: cart)
             : Column(
                 children: [
                   Expanded(
@@ -114,6 +117,65 @@ class _CartScreenState extends State<CartScreen> {
   }
 }
 
+// Act4 Enhancement 3: an empty cart now has three causes, and they do not look
+// the same to the user: the fetch for /carts/user/{id} is still running, it
+// failed, or the user genuinely has nothing in their cart.
+class _EmptyCart extends StatelessWidget {
+  final CartProvider cart;
+
+  const _EmptyCart({required this.cart});
+
+  @override
+  Widget build(BuildContext context) {
+    if (cart.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (cart.error != null) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 32.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.cloud_off, size: 36.sp, color: Colors.grey),
+              SizedBox(height: 12.h),
+              CustomText(
+                text: 'Could not load your saved cart.',
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 6.h),
+              CustomText(
+                text: cart.error!,
+                fontSize: 11.sp,
+                textAlign: TextAlign.center,
+                color: Colors.grey,
+              ),
+              SizedBox(height: 16.h),
+              if (cart.userId != null)
+                TextButton(
+                  onPressed: () => cart.loadForUser(cart.userId!),
+                  child: CustomText(
+                    text: 'Try again',
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: kPrimaryNavy,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Center(
+      child: CustomText(text: 'Your cart is empty.', fontSize: 14.sp),
+    );
+  }
+}
+
 class _CartItemCard extends StatelessWidget {
   final CartProduct product;
   final int quantity;
@@ -140,13 +202,17 @@ class _CartItemCard extends StatelessWidget {
       // details screen opens straight away — no GET /products/{id} round-trip
       // and no spinner in between.
       child: InkWell(
+        // Act4 Enhancement 3: a line seeded from /carts/user/{id} is only a
+        // summary, so it falls back to ProductDetailsLoader, which fetches the
+        // full product first. Lines added from the shop still open instantly.
         onTap: () {
           final full = context.read<CartProvider>().productFor(product.id);
-          if (full == null) return;
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ProductDetailsScreen(product: full),
+              builder: (context) => full != null
+                  ? ProductDetailsScreen(product: full)
+                  : ProductDetailsLoader(productId: product.id),
             ),
           );
         },

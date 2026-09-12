@@ -87,6 +87,22 @@ class CartProduct {
     );
   }
 
+  // Act4 Enhancement 3: a line seeded from /carts/user/{id} carries the
+  // server's quantity. Editing it with +/- rebuilds the line at the new
+  // quantity, since every field is final.
+  CartProduct withQuantity(int newQuantity) {
+    return CartProduct(
+      id: id,
+      title: title,
+      price: price,
+      quantity: newQuantity,
+      total: price * newQuantity,
+      discountPercentage: discountPercentage,
+      discountedTotal: discountedLineTotal(newQuantity),
+      thumbnail: thumbnail,
+    );
+  }
+
   factory CartProduct.fromJson(Map<String, dynamic> json) {
     return CartProduct(
       id: json['id'],
