@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// Act5 Enhancement 2: each signed-in user can only write their own profile
+// document. Everything else is denied.
+// Act6: any signed-in user may read profiles (for the chat list), and only
+// the two people in a chat room may read or write its messages.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'username', 'email', 'firstName', 'lastName', 'age', 'phone']);
+    }
+
+    // Room ids are the two uids, sorted and joined with "_".
+    match /chat_rooms/{roomId}/messages/{messageId} {
+      function isMember() {
+        return request.auth != null && request.auth.uid in roomId.split('_');
+      }
+
+      allow read: if isMember();
+      allow create: if isMember()
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.receiverId in roomId.split('_')
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.timestamp is timestamp
+        && request.resource.data.seen == false
+        && request.resource.data.keys().hasOnly(
+             ['senderId', 'senderEmail', 'receiverId', 'message', 'timestamp', 'seen']);
+      // Act6 Enhancement 3: the receiver may only flip "seen".
+      allow update: if isMember()
+        && resource.data.receiverId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seen']);
+    }
+  }
+}

@@ -6,8 +6,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+// models
+import '../models/user.dart';
+
 // services
 import '../services/user_service.dart';
+
+// utils
+import '../utils/auth_helpers.dart';
 
 // widgets
 import '../widgets/custom_text.dart';
@@ -28,6 +34,9 @@ class _SigninScreenState extends State<SigninScreen> {
 
   bool _isLoading = false;
   bool _obscurePassword = true;
+  // Act5 Enhancement 2: DummyJSON signs in with a username, Firebase with an
+  // email address.
+  LoginType _loginType = LoginType.dummyJson;
   // Act4 Enhancement 1: the form is held back until the saved-token check
   // finishes, so a returning user never sees it flash before being forwarded.
   bool _checkingSession = true;
@@ -71,13 +80,17 @@ class _SigninScreenState extends State<SigninScreen> {
         _errorMessage = null;
       });
       try {
-        final response = await userService.loginUser(
-          _usernameController.text.trim(),
-          _passwordController.text.trim(),
-        );
-
-        // Save user data to SharedPreferences
-        await userService.saveUserData(response);
+        if (_loginType == LoginType.firebase) {
+          await userService.signIn(
+            email: _usernameController.text.trim(),
+            password: _passwordController.text,
+          );
+        } else {
+          await userService.loginUser(
+            _usernameController.text.trim(),
+            _passwordController.text.trim(),
+          );
+        }
 
         if (!mounted) return;
         setState(() {
@@ -86,30 +99,15 @@ class _SigninScreenState extends State<SigninScreen> {
 
         // The splash screen takes it from here: it loads this user's cart and
         // then opens the home screen.
-        Navigator.pushReplacementNamed(context, '/splash', arguments: response);
+        Navigator.pushReplacementNamed(context, '/splash');
       } catch (e) {
         if (!mounted) return;
         setState(() {
           _isLoading = false;
-          _errorMessage = _readableError(e);
+          _errorMessage = readableAuthError(e);
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${e.toString()}')),
-        );
       }
     }
-  }
-
-  // The service throws the raw response body, which is JSON. Only the message
-  // inside it is worth putting in front of the user.
-  String _readableError(Object error) {
-    final text = error.toString();
-    final match = RegExp('"message"\\s*:\\s*"([^"]+)"').firstMatch(text);
-    if (match != null) return match.group(1)!;
-    if (text.contains('SocketException') || text.contains('ClientException')) {
-      return 'Cannot reach the server. Check your connection.';
-    }
-    return 'Something went wrong. Please try again.';
   }
 
   @override
@@ -125,11 +123,8 @@ class _SigninScreenState extends State<SigninScreen> {
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 24.h),
-              child: Transform.translate(
-                offset: Offset(0, -28.h),
-                child: _buildFormCard(),
-              ),
+              padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
+              child: _buildFormCard(),
             ),
           ),
         ],
@@ -140,7 +135,7 @@ class _SigninScreenState extends State<SigninScreen> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 48.h),
+      padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 28.h),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -157,20 +152,20 @@ class _SigninScreenState extends State<SigninScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 24.h),
+            SizedBox(height: 16.h),
             Container(
-              padding: EdgeInsets.all(12.r),
+              padding: EdgeInsets.all(10.r),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16.r),
               ),
               child: Image.asset(
                 'assets/images/exchange_logo.png',
-                width: 92.w,
+                width: 72.w,
                 fit: BoxFit.contain,
               ),
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: 14.h),
             CustomText(
               text: 'Welcome back',
               fontSize: 24.sp,
@@ -208,12 +203,21 @@ class _SigninScreenState extends State<SigninScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            _buildLoginTypeToggle(),
+            SizedBox(height: 16.h),
             _buildField(
               controller: _usernameController,
-              label: 'Username',
-              icon: Icons.person_outline,
+              label: _loginType == LoginType.firebase ? 'Email' : 'Username',
+              icon: _loginType == LoginType.firebase
+                  ? Icons.email_outlined
+                  : Icons.person_outline,
+              keyboardType: _loginType == LoginType.firebase
+                  ? TextInputType.emailAddress
+                  : TextInputType.text,
               validator: (value) => (value == null || value.trim().isEmpty)
-                  ? 'Username is required'
+                  ? (_loginType == LoginType.firebase
+                        ? 'Email is required'
+                        : 'Username is required')
                   : null,
             ),
             SizedBox(height: 14.h),
@@ -297,9 +301,61 @@ class _SigninScreenState extends State<SigninScreen> {
                       ),
               ),
             ),
+            SizedBox(height: 12.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CustomText(
+                  text: "Don't have an account?",
+                  fontSize: 12.sp,
+                  color: Colors.black54,
+                ),
+                TextButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.pushNamed(context, '/signup'),
+                  child: CustomText(
+                    text: 'Sign up',
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
+                    color: kPrimaryNavy,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLoginTypeToggle() {
+    return SegmentedButton<LoginType>(
+      segments: [
+        ButtonSegment(
+          value: LoginType.dummyJson,
+          label: CustomText(text: 'DummyJSON', fontSize: 12.sp),
+          icon: Icon(Icons.cloud_outlined, size: 16.sp),
+        ),
+        ButtonSegment(
+          value: LoginType.firebase,
+          label: CustomText(text: 'Firebase', fontSize: 12.sp),
+          icon: Icon(Icons.local_fire_department_outlined, size: 16.sp),
+        ),
+      ],
+      selected: {_loginType},
+      showSelectedIcon: false,
+      style: SegmentedButton.styleFrom(
+        selectedBackgroundColor: kPrimaryNavy,
+        selectedForegroundColor: Colors.white,
+      ),
+      onSelectionChanged: _isLoading
+          ? null
+          : (selection) => setState(() {
+              _loginType = selection.first;
+              _usernameController.clear();
+              _errorMessage = null;
+            }),
     );
   }
 
@@ -310,11 +366,13 @@ class _SigninScreenState extends State<SigninScreen> {
     required String? Function(String?) validator,
     bool obscure = false,
     Widget? suffix,
+    TextInputType? keyboardType,
     void Function(String)? onSubmitted,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
+      keyboardType: keyboardType,
       autocorrect: false,
       enableSuggestions: false,
       textCapitalization: TextCapitalization.none,

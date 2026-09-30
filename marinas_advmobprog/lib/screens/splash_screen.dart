@@ -40,6 +40,15 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
+    // Act5 Enhancement 2: renew the token before anything uses it. A session
+    // that cannot be renewed is ended here instead of failing later.
+    if (!await _userService.refreshSession()) {
+      await _userService.logout();
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/signin');
+      return;
+    }
+
     final userData = await _userService.getUserData();
     if (!mounted) return;
 

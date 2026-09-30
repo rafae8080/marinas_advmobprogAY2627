@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "601402959408",
+    "project_id": "marinas-advmblprog",
+    "storage_bucket": "marinas-advmblprog.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:601402959408:android:10e166d3d460b00c1ceff5",
+        "android_client_info": {
+          "package_name": "com.example.flutter_connection"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnoAwxw7pbZCUd4XoyF9-WigZY3Dj2Dis"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:601402959408:android:9846207963d2c5f81ceff5",
+        "android_client_info": {
+          "package_name": "com.example.marinas_advmobprog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnoAwxw7pbZCUd4XoyF9-WigZY3Dj2Dis"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -8,6 +8,9 @@ import 'package:provider/provider.dart';
 // providers
 import '../providers/theme_provider.dart';
 
+// utils
+import '../utils/auth_helpers.dart';
+
 // widgets
 import '../widgets/custom_text.dart';
 
@@ -59,6 +62,38 @@ class SettingsScreen extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
                 subtitle: CustomText(text: 'On', fontSize: 12.sp),
+              ),
+            ),
+            SizedBox(height: 24.h),
+            CustomText(
+              text: 'Account',
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+            ),
+            SizedBox(height: 8.h),
+            // Act5 Enhancement 3: logout from settings, back to the login.
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: ListTile(
+                leading: Icon(
+                  Icons.logout,
+                  size: 24.sp,
+                  color: Colors.red.shade700,
+                ),
+                title: CustomText(
+                  text: 'Log out',
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red.shade700,
+                ),
+                subtitle: CustomText(
+                  text: 'Clears your session on this device',
+                  fontSize: 12.sp,
+                ),
+                onTap: () => confirmAndLogout(context),
               ),
             ),
           ],

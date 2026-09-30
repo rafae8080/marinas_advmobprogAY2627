@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'product_screen.dart';
+// Act6: chat list backed by Firestore.
+import 'chat_screen.dart';
 // Enhancement 1: cart screen rendering the /carts endpoint.
 import 'cart_screen.dart';
 // Enhancement 6: the Profile tab now renders the signed-in user.
@@ -16,8 +18,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Enhancement 2: index of the cart tab, used to hide the FAB.
-  static const int _cartIndex = 1;
+  // Act6: Chat is back as the second tab; the chat FAB is gone.
+  static const _titles = ['', 'Chats', 'Cart', 'Profile'];
 
   int selectedIndex = 0;
   final PageController pageController = PageController();
@@ -33,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
           title: selectedIndex == 0
               ? Image.asset('assets/images/exchange_logo.png', scale: 11.3)
               : CustomText(
-                  text: selectedIndex == _cartIndex ? 'Cart' : 'Profile',
+                  text: _titles[selectedIndex],
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w600,
                 ),
@@ -52,32 +54,33 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: pageController,
           // Enhancement 2: the bar had three tabs but only one page, so tapping
           // anything other than Shop rendered a blank screen.
-          children: const [ProductScreen(), CartScreen(), ProfileScreen()],
+          children: const [
+            ProductScreen(),
+            ChatScreen(),
+            CartScreen(),
+            ProfileScreen(),
+          ],
           onPageChanged: (page) {
             setState(() {
               selectedIndex = page;
             });
           },
         ),
-        // Enhancement 2: chat moved out of the bottom bar into this button,
-        // which is hidden while the cart screen is showing.
-        floatingActionButton: selectedIndex == _cartIndex
-            ? null
-            : FloatingActionButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const _ChatPage()),
-                ),
-                child: Icon(Icons.chat, size: 24.sp),
-              ),
         bottomNavigationBar: BottomNavigationBar(
           showSelectedLabels: false,
           showUnselectedLabels: false,
-          // Enhancement 2: Chat was replaced by Cart here.
+          // Four items would switch the bar to "shifting", which draws white
+          // icons on the white bar.
+          type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.shopping_bag),
               label: 'Shop',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble_outline),
+              activeIcon: Icon(Icons.chat_bubble),
+              label: 'Chat',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.shopping_cart),
@@ -93,27 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
             });
           },
         ),
-      ),
-    );
-  }
-}
-
-// Enhancement 2: page opened by the chat FloatingActionButton.
-class _ChatPage extends StatelessWidget {
-  const _ChatPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: CustomText(
-          text: 'Chat',
-          fontSize: 20.sp,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      body: Center(
-        child: CustomText(text: 'No messages yet.', fontSize: 14.sp),
       ),
     );
   }
